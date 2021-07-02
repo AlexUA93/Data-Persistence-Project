@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -11,13 +12,13 @@ public class MainManager : MonoBehaviour
     public Rigidbody Ball;
 
     public Text ScoreText;
+    public Text ScoreBestResolt;
     public GameObject GameOverText;
     
     private bool m_Started = false;
     private int m_Points;
     
     private bool m_GameOver = false;
-
     
     // Start is called before the first frame update
     void Start()
@@ -36,6 +37,8 @@ public class MainManager : MonoBehaviour
                 brick.onDestroyed.AddListener(AddPoint);
             }
         }
+
+        SetBestScore();
     }
 
     private void Update()
@@ -67,10 +70,40 @@ public class MainManager : MonoBehaviour
         m_Points += point;
         ScoreText.text = $"Score : {m_Points}";
     }
+    void SetBestScore()
+    {
+        if (DataManager.Instance != null)
+        {
+            ScoreBestResolt.text = $"Best Score : {DataManager.Instance.m_BestCharacter} : { DataManager.Instance.m_Points}";
+        }
+    }
 
     public void GameOver()
     {
         m_GameOver = true;
         GameOverText.SetActive(true);
+
+        if (DataManager.Instance != null)
+        {
+            if (DataManager.Instance.m_Points <= m_Points)
+            {
+                DataManager.Instance.m_Points = m_Points;
+                DataManager.Instance.m_BestCharacter = DataManager.Instance.m_CharacterName;
+                SaveData();
+            }
+        }
+    }
+
+    public void SaveData()
+    {
+        SaveData data = new SaveData();
+
+        data.m_BestCharacter = DataManager.Instance.m_BestCharacter;
+        data.m_BestScore = DataManager.Instance.m_Points;
+        data.m_CharacterName = DataManager.Instance.m_CharacterName;
+
+        string json = JsonUtility.ToJson(data);
+
+        File.WriteAllText(Application.persistentDataPath + "/savefile.json", json);
     }
 }
